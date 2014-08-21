@@ -17,9 +17,28 @@ using namespace std;
 class Configuration
 {
     public:
+        static const unsigned char MAX_STORES = 100;
+        
         static void load(string const &filename);
-        static inline int get(string const &key){scoped_lock<boost::mutex> lock(_mtx); return _config._values[key];};
-        static inline void set(string const &key, int value){scoped_lock<boost::mutex> lock(_mtx); _config._values[key] = value;};
+        static inline int get(string const &key)
+        {
+            scoped_lock<boost::mutex> lock(_mtx);
+            ConfigMap::iterator iter = _config._values.find(key);
+            if (_config._values.end() == iter)
+            {
+                return -1;
+            }
+            else
+            {
+                return iter.second;
+            }
+        };
+    
+        static inline void set(string const &key, int value)
+        {
+            scoped_lock<boost::mutex> lock(_mtx);
+            _config._values[key] = value;
+        }
 
     protected:
     private:

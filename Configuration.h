@@ -30,7 +30,7 @@ class Configuration
             }
             else
             {
-                return iter.second;
+                return iter->second;
             }
         };
     

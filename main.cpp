@@ -1,5 +1,6 @@
 #include <iostream>
 #include "Configuration.h"
+#include "ElevatorController.h"
 #include "version.h"
 
 using namespace std;
@@ -12,7 +13,14 @@ int main(int ARGC, char** ARGV)
         cout << progpath.substr(lastslash+1) << " v" << AutoVersion::FULLVERSION_STRING << endl;
     }
 
+    // Load configuration
     Configuration::load("config.cfg");
 
+    // Setup ElevatorController
+    ElevatorController::setup();
+    
+    // Start controller
+    ElevatorController::run();
+    
     return 0;
 }

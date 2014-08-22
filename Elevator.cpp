@@ -8,27 +8,42 @@
 
 #include "Elevator.h"
 
+Elevator::Elevator(const Elevator &other)
+{
+    _state = other._state;
+    _skip_from = other._skip_from; // inclusive
+    _skip_to = other._skip_to;   // inclusive
+    _capacity = other._capacity;
+    _speed = other._speed;
+    _stop_time = other._stop_time;
+    _skip_when_full = other._skip_when_full;
+    
+    _destinations = other._destinations;
+
+}
+
 Elevator::Elevator(string const &key)
 {
     // Initial state
-    m_current_store = 0;
-    m_passengers = 0;
-    m_resting = true;
-    
+    _state.elevatorIs = resting;
+    _state.current_store = 0;
+    _state.passengers = 0;
+    _destinations.resize(Configuration::get(string("building.stores")), 0);
+
     // Configure an elevator
     int config_value = -1;
     config_value = Configuration::get(key + ".skip.from");
-    m_skip_from = (config_value < 0) ? Configuration::MAX_STORES : config_value;
+    _skip_from = (config_value < 0) ? Configuration::get("building.stores") : config_value;
     config_value = Configuration::get(key + ".skip.to");
-    m_skip_to   = (config_value < 0) ? Configuration::MAX_STORES : config_value;
+    _skip_to   = (config_value < 0) ? Configuration::get("building.stores") : config_value;
     config_value = Configuration::get(key + ".skip.when.full");
-    m_skip_when_full = (config_value < 0) ? false : (0 != config_value);
+    _skip_when_full = (config_value < 0) ? false : (0 != config_value);
     config_value = Configuration::get(key + ".capacity");
-    m_capacity = (config_value < 0) ? 20 : config_value;
+    _capacity = (config_value < 0) ? 20 : config_value;
     config_value = Configuration::get(key + ".speed");
-    m_speed = (config_value < 0) ? 1 : config_value;
+    _speed = (config_value < 0) ? 1 : config_value;
     config_value = Configuration::get(key + ".stop.time");
-    m_stop_time = (config_value < 0) ? 5 : config_value;
+    _stop_time = (config_value < 0) ? 5 : config_value;
 }
 
 Elevator::~Elevator()
@@ -36,26 +51,73 @@ Elevator::~Elevator()
 }
 
 unsigned char
-Elevator::registerPassengers(unsigned char number, unsigned char dest_store)
+Elevator::boardPassengers(unsigned char number, unsigned char dest_store)
 {
+    scoped_lock<boost::mutex> lock(_mtx);
+
     unsigned char boarded = freePlaces() < number?freePlaces():number;
-    m_destinations[dest_store] += boarded;
-    m_passengers += boarded;
+    _destinations[dest_store] += boarded;
+    _state.passengers += boarded;
+    
+    if ((dest_store > _state.current_store && _state.most_distant_call < dest_store)
+        || (dest_store < _state.current_store && _state.most_distant_call > dest_store)
+        )
+    {
+        _state.most_distant_call = dest_store;
+    }
 
     return boarded;
 }
 
 unsigned char
-Elevator::unregisterPassengers()
+Elevator::unboardPassengers()
 {
-    unsigned char unboarded = m_destinations[m_current_store];
-    m_destinations[m_current_store] = 0;
-    m_passengers -= unboarded;
+    scoped_lock<boost::mutex> lock(_mtx);
+
+    unsigned char unboarded = _destinations[_state.current_store];
+    _destinations[_state.current_store] = 0;
+    _state.passengers -= unboarded;
     return unboarded;
 }
 
 void
-Elevator::step()
+Elevator::keep(ElevatorStates new_state)
 {
-    
+    switch(new_state)
+    {
+        case resting:
+            break;
+        case moving_up:
+            _state.current_store++;
+            break;
+        case moving_down:
+            _state.current_store--;
+            break;
+        case boarding:
+            _state.boarding_timer--;
+            break;
+    }
+}
+
+void
+Elevator::start(ElevatorStates new_state)
+{
+    switch(new_state)
+    {
+        case resting:
+            _state.elevatorIs = resting;
+            break;
+        case moving_up:
+            _state.current_store++;
+            _state.elevatorIs = moving_up;
+            break;
+        case moving_down:
+            _state.current_store--;
+            _state.elevatorIs = moving_down;
+            break;
+        case boarding:
+            _state.boarding_timer = _stop_time;
+            _state.elevatorIs = boarding;
+            break;
+    }
 }

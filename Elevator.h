@@ -11,33 +11,52 @@
 
 #include "Configuration.h"
 
+enum ElevatorStates {resting, moving_up, moving_down, boarding};
+
+struct ElevatorStateData
+{
+    ElevatorStates elevatorIs;
+    unsigned char current_store;
+    unsigned char boarding_timer;
+    unsigned char passengers;
+    unsigned char most_distant_call;
+};
+
 class Elevator
 {
 public:
     Elevator(string const &key);
+    Elevator(const Elevator &other);
     virtual ~Elevator();
-    inline bool goingUp() const {return m_up;};
-    inline unsigned char freePlaces() const {return m_capacity - m_passengers;};
-    unsigned char registerPassengers(unsigned char number, unsigned char dest_store);
-    unsigned char unregisterPassengers();
-    void step();
+    inline bool goingUp() const {return (_state.most_distant_call > _state.current_store);};
+    inline bool boardingEnds(){return (_state.boarding_timer == 0);}
+    inline unsigned char freePlaces() const {return _capacity - _state.passengers;};
+    inline unsigned char capacity() const {return _capacity;};
+    inline unsigned char getCurrentStore() {return _state.current_store;}
+    inline ElevatorStates getCurrentState() const {return _state.elevatorIs;}
+    inline unsigned char getMostDistantCall() {return _state.most_distant_call;}
+    inline void setMostDistantCall(unsigned char store) {_state.most_distant_call = store;}
+    inline unsigned char serves(unsigned char store) {return !(_skip_from <= store && _skip_to >= store );}
+    inline bool hasPassengersTo(unsigned char store) {return (_destinations[store] > 0);}
+    unsigned char boardPassengers(unsigned char number, unsigned char dest_store);
+    unsigned char unboardPassengers();
+    void start(ElevatorStates new_state);
+    void keep(ElevatorStates new_state);
     
 protected:
 private:
     
-    unsigned char m_current_store;
-    unsigned char m_skip_from; // inclusive
-    unsigned char m_skip_to;   // inclusive
-    unsigned char m_capacity;
-    unsigned char m_speed;
-    unsigned char m_stop_time;
-    bool          m_skip_when_full;
-    bool          m_up;
-    bool          m_resting;
-    unsigned char m_passengers;
+    unsigned char _skip_from; // inclusive
+    unsigned char _skip_to;   // inclusive
+    unsigned char _capacity;
+    unsigned char _speed;
+    unsigned char _stop_time;
+    bool          _skip_when_full;
+    ElevatorStateData _state;
     
-    unsigned int  m_destinations[Configuration::MAX_STORES] = {0};
-    boost::mutex  m_mtx;
+    
+    vector<unsigned int>  _destinations;
+    boost::mutex  _mtx;
 };
 
 #endif /* defined(__CreditSwissElevator__Elevator__) */

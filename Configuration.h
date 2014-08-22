@@ -17,22 +17,13 @@ using namespace std;
 class Configuration
 {
     public:
-        static const unsigned char MAX_STORES = 100;
-        
         static void load(string const &filename);
         static inline int get(string const &key)
         {
             scoped_lock<boost::mutex> lock(_mtx);
             ConfigMap::iterator iter = _config._values.find(key);
-            if (_config._values.end() == iter)
-            {
-                return -1;
-            }
-            else
-            {
-                return iter->second;
-            }
-        };
+            return (_config._values.end() == iter) ? -1 : iter->second;
+        }
     
         static inline void set(string const &key, int value)
         {

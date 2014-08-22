@@ -2,7 +2,17 @@
 
 Store::Store(unsigned char store)
 {
-    m_store = m_max_dest = m_min_dest = store;
+    _store = _max_dest = _min_dest = store;
+    int stores = Configuration::get("building.stores");
+    _destinations.resize(stores, 0);
+}
+
+Store::Store(const Store &other)
+{
+    _store = other._store;
+    _max_dest = other._max_dest;
+    _min_dest = other._min_dest;
+    _destinations = other._destinations;
 }
 
 Store::~Store()
@@ -10,33 +20,34 @@ Store::~Store()
 }
 
 unsigned int
-Store::pickPeople(unsigned int how_many, Elevator &elevator)
+Store::putPeopleInto(Elevator &elevator)
 {
     unsigned int selected = 0, picked = 0;
+    unsigned int how_many = elevator.freePlaces();
     bool up = elevator.goingUp();
     int idx_inc = up?-1:1;
-    unsigned char current_dest = up?m_max_dest:m_min_dest;
+    unsigned char current_dest = up?_max_dest:_min_dest;
     
-    while (current_dest >= up?m_store+1:m_min_dest
-           && current_dest <= up?m_max_dest:m_store-1
+    while (current_dest >= up?_store+1:_min_dest
+           && current_dest <= up?_max_dest:_store-1
            && selected < how_many)
     {
         
-        scoped_lock<boost::mutex> lock(m_mtx);
-        if (m_destinations[current_dest] > 0)
+        scoped_lock<boost::mutex> lock(_mtx);
+        if (_destinations[current_dest] > 0)
         {
-            picked = min(m_destinations[current_dest], how_many);
+            picked = min(_destinations[current_dest], how_many);
             selected += picked;
             how_many -= picked;
-            m_destinations[current_dest] -= picked;
-            elevator.registerPassengers(picked, current_dest);
+            _destinations[current_dest] -= picked;
+            elevator.boardPassengers(picked, current_dest);
         }
         
         //Adjust min/max_dest
-        if (m_destinations[current_dest] == 0)
+        if (_destinations[current_dest] == 0)
         {
-            m_min_dest = up?m_min_dest:current_dest+idx_inc;
-            m_max_dest = up?current_dest+idx_inc:m_max_dest;
+            _min_dest = up?_min_dest:current_dest+idx_inc;
+            _max_dest = up?current_dest+idx_inc:_max_dest;
         }
         
         // Move to the next destination
@@ -44,4 +55,12 @@ Store::pickPeople(unsigned int how_many, Elevator &elevator)
     }
     
     return selected;
-};
+}
+
+unsigned int
+Store::getPeopleFrom(Elevator &elevator)
+{
+    unsigned int picked = elevator.unboardPassengers();
+    _destinations[_store] += picked;
+    return picked;
+}

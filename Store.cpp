@@ -7,14 +7,6 @@ Store::Store(unsigned char store)
     _destinations.resize(stores, 0);
 }
 
-Store::Store(const Store &other)
-{
-    _store = other._store;
-    _max_dest = other._max_dest;
-    _min_dest = other._min_dest;
-    _destinations = other._destinations;
-}
-
 Store::~Store()
 {
 }
@@ -26,35 +18,40 @@ Store::putPeopleInto(Elevator &elevator)
     unsigned int how_many = elevator.freePlaces();
     bool up = elevator.goingUp();
     int idx_inc = up?-1:1;
-    unsigned char current_dest = up?_max_dest:_min_dest;
+    unsigned char current_dest = up?maxStore():0;
+	unsigned char temp_dest = current_dest;
     
-    while (current_dest >= up?_store+1:_min_dest
-           && current_dest <= up?_max_dest:_store-1
-           && selected < how_many)
+    while (
+           current_dest >= 0 && current_dest <= maxStore()
+           && (selected < how_many)
+		)
     {
-        
-        scoped_lock<boost::mutex> lock(_mtx);
-        if (_destinations[current_dest] > 0)
-        {
-            picked = min(_destinations[current_dest], how_many);
-            selected += picked;
-            how_many -= picked;
-            _destinations[current_dest] -= picked;
-            elevator.boardPassengers(picked, current_dest);
-        }
-        
-        //Adjust min/max_dest
-        if (_destinations[current_dest] == 0)
-        {
-            _min_dest = up?_min_dest:current_dest+idx_inc;
-            _max_dest = up?current_dest+idx_inc:_max_dest;
-        }
-        
+        if (elevator.getCurrentStore() != current_dest && elevator.serves(current_dest))
+		{
+		    if (passengersTo(current_dest) > 0)
+		    {
+		        picked = min(passengersTo(current_dest), how_many);
+		        selected += picked;
+		        how_many -= picked;
+		        addPassengersTo(current_dest, 0-picked);
+		        elevator.boardPassengers(picked, current_dest);
+		    }
+		    
+		    //Adjust min/max_dest if still has passengers to current_dest
+		    if (passengersTo(current_dest) > 0)
+		    {
+				temp_dest = current_dest;
+		    }
+		}
         // Move to the next destination
         current_dest += idx_inc;
     }
+
+	// Update min/max dests
+    _min_dest = min(temp_dest, _store);
+    _max_dest = max(temp_dest, _store);
     
-    return selected;
+	return selected;
 }
 
 unsigned int

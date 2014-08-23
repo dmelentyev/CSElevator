@@ -32,7 +32,7 @@ ElevatorController::setup()
     for (int i=1; i <= elevators; ++i)
     {
         Elevator el(string("elevator"+lexical_cast<std::string>(i)));
-        _controller._elevators.push_back(el);
+        getElevators().push_back(el);
     }
     
     // Create stores
@@ -41,7 +41,7 @@ ElevatorController::setup()
     for (int i=0; i < stores; ++i)
     {
         Store st(i);
-        _controller._stores.push_back(st);
+        getStores().push_back(st);
     }
 }
 
@@ -53,38 +53,25 @@ ElevatorController::run()
     unsigned int store_capacity = Configuration::get("building.store.capacity");
     long long iteration=0L;
     
-    for (unsigned char s=1; s < _controller._stores.size(); s++)
+    for (unsigned char s=0; s < getStores().size(); s++)
     {
-        if(_controller._stores[0].setDestination(s, store_capacity) < store_capacity)
+        if(getStores()[0].setDestination(s, store_capacity) < store_capacity)
         {
             cerr << "Error scheduling " << store_capacity << " people for store " << (int) s << endl;
         }
     }
     
-    while(_controller._stores[0].hasPassengers()
-          || _controller._elevators[0].getCurrentState() != resting
-          || _controller._elevators[1].getCurrentState() != resting
-          || _controller._elevators[2].getCurrentState() != resting
+    while(getStores()[0].hasPassengers()
+          || getElevators()[0].getCurrentState() != resting
+          || getElevators()[1].getCurrentState() != resting
+          || getElevators()[2].getCurrentState() != resting
           )
     {
-        iteration++;
-        cout << "#" << iteration
-        << " el.1: "
-        << ":" << (int) _controller._elevators[0].getCurrentStore()
-        << ":" << (int) (_controller._elevators[0].capacity() - _controller._elevators[0].freePlaces())
-        << " el.2: "
-        << ":" << (int) _controller._elevators[1].getCurrentStore()
-        << ":" << (int) (_controller._elevators[1].capacity() - _controller._elevators[0].freePlaces())
-        << " el.3: "
-        << ":" << (int) _controller._elevators[2].getCurrentStore()
-        << ":" << (int) (_controller._elevators[2].capacity() - _controller._elevators[0].freePlaces())
-        << endl;
-        
         // Check elevator calls
-        BOOST_FOREACH(Store &st, _controller._stores)
+        BOOST_FOREACH(Store &st, getStores())
         {
             // Find nearest elevator that goes appropriate direction or is resting
-            BOOST_FOREACH(Elevator &el, _controller._elevators)
+            BOOST_FOREACH(Elevator &el, getElevators())
             {
                 if (el.serves(st.number())
                     && st.hasPassengers()
@@ -108,23 +95,37 @@ ElevatorController::run()
             }
         }
         
+		string prettystr;
+        iteration++;
+        cout << "#" << iteration;
+        
         // Change states
-        BOOST_FOREACH(Elevator &el, _controller._elevators)
+        BOOST_FOREACH(Elevator &el, getElevators())
         {
+			cout	<< " el.: "
+					<< el.prettyPrint(prettystr);
             unsigned char store = el.getCurrentStore();
             switch (el.getCurrentState())
             {
                 case moving_up:
                     // Serve passengers going to/from current store
                     if (el.serves(store)
-                        && ( el.hasPassengersTo(store) || _controller._stores[store].hasPassengersUp()))
+                        && ( el.hasPassengersTo(store) 
+                            || (getStores()[store].hasPassengersUp() 
+                                && el.freePlaces ())))
                     {
                         el.start(boarding);
                         
                     }
-                    // handle empty, going up, no calls (reverse down for resting)
-                    else if (el.freePlaces() == el.capacity() && el.getMostDistantCall() <= store)
+                    // handle empty, going up, no calls above (reverse down for resting or lower calls)
+                    else if (el.empty() 
+                             && el.getMostDistantCall() <= store)
                     {
+						// If no calls - go down
+						if (el.getMostDistantCall() == store)
+						{
+							el.setMostDistantCall(0);
+						}
                         el.start(moving_down);
                     }
                     // Keep moving same direction otherwise
@@ -136,13 +137,14 @@ ElevatorController::run()
                 case moving_down:
                     // Serve passengers going to/from current store
                     if (el.serves(store)
-                        && ( el.hasPassengersTo(store) || _controller._stores[store].hasPassengers()))
+                        && ( el.hasPassengersTo(store) 
+                            || getStores()[store].hasPassengers()))
                     {
                         el.start(boarding);
-                        
                     }
                     // handle empty, going down, a call comes from above with no calls below
-                    else if (el.freePlaces() == el.capacity() && el.getMostDistantCall() > store)
+                    else if (el.empty() 
+                             && el.getMostDistantCall() > store)
                     {
                         el.start(moving_up);
                     }
@@ -159,9 +161,9 @@ ElevatorController::run()
                     break;
                 case boarding:
                     // unboard
-                    _controller._stores[store].getPeopleFrom(el);
+                    getStores()[store].getPeopleFrom(el);
                     // if we were moving up - board more people going up (and vice versa)
-                    _controller._stores[store].putPeopleInto(el);
+                    getStores()[store].putPeopleInto(el);
 
                     if (el.boardingEnds())
                     {
@@ -183,7 +185,7 @@ ElevatorController::run()
                     break;
                 case resting:
                     // start boarding if call from ground floor
-                    if(_controller._stores[0].hasPassengersUp())
+                    if(getStores()[0].hasPassengersUp())
                     {
                         el.start(boarding);
                     }
@@ -201,6 +203,7 @@ ElevatorController::run()
                     break;
             }
         }
+		cout << endl;
     }
     
 }

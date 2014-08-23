@@ -23,6 +23,9 @@ class ElevatorController
     private:
         static ElevatorController _controller;
         static boost::mutex _mtx;
+
+		static vector<Elevator> & getElevators(){return _controller._elevators;}
+		static vector<Store> & getStores(){return _controller._stores;}
     
         vector<Elevator> _elevators;
         vector<Store>    _stores;

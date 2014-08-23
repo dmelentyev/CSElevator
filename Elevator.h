@@ -31,13 +31,16 @@ public:
     inline bool goingUp() const {return (_state.most_distant_call > _state.current_store);};
     inline bool boardingEnds(){return (_state.boarding_timer == 0);}
     inline unsigned char freePlaces() const {return _capacity - _state.passengers;};
+    inline bool empty() const {return (0 == _state.passengers);};
     inline unsigned char capacity() const {return _capacity;};
     inline unsigned char getCurrentStore() {return _state.current_store;}
     inline ElevatorStates getCurrentState() const {return _state.elevatorIs;}
     inline unsigned char getMostDistantCall() {return _state.most_distant_call;}
-    inline void setMostDistantCall(unsigned char store) {_state.most_distant_call = store;}
+    inline void setMostDistantCall(unsigned char store) {assert(_destinations.size() > store); _state.most_distant_call = store;}
     inline unsigned char serves(unsigned char store) {return !(_skip_from <= store && _skip_to >= store );}
     inline bool hasPassengersTo(unsigned char store) {return (_destinations[store] > 0);}
+	string const & prettyPrint(string &str);
+
     unsigned char boardPassengers(unsigned char number, unsigned char dest_store);
     unsigned char unboardPassengers();
     void start(ElevatorStates new_state);
@@ -56,7 +59,6 @@ private:
     
     
     vector<unsigned int>  _destinations;
-    boost::mutex  _mtx;
 };
 
 #endif /* defined(__CreditSwissElevator__Elevator__) */

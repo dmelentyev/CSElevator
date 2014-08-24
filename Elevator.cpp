@@ -8,6 +8,7 @@
 
 #include "Elevator.h"
 #include <sstream>
+#include <iomanip>
 
 Elevator::Elevator(const Elevator &other)
 {
@@ -98,7 +99,8 @@ Elevator::keep(ElevatorStates new_state)
 			assert (_state.current_store > _state.most_distant_call ); 
 		    _state.current_store--;
             break;
-        case boarding:
+        case boarding_up:
+        case boarding_down:
 			assert (_state.boarding_timer > 0 ); 
 	        _state.boarding_timer--;
             break;
@@ -111,35 +113,32 @@ Elevator::start(ElevatorStates new_state)
     switch(new_state)
     {
         case resting:
-            _state.elevatorIs = resting;
-            break;
         case moving_up:
-            _state.elevatorIs = moving_up;
-            break;
         case moving_down:
-            _state.elevatorIs = moving_down;
+			// Do nothing, just change the state after the switch 
             break;
-        case boarding:
-            _state.boarding_timer = _stop_time;
-            _state.elevatorIs = boarding;
+			
+        case boarding_up:
+        case boarding_down:
+			// Start boarding timer
+			_state.boarding_timer = _stop_time -1;
             break;
     }
+   _state.elevatorIs = new_state;
 }
 
-string const &
-Elevator::prettyPrint(string &str)
+std::ostream& operator<<(std::ostream& os, const Elevator& obj)
 {
-	ostringstream os;
-	
-    os  << this
-		<< ":" << (int) getCurrentStore()
-        << ":" << ((getCurrentState () == resting) ? "*" : 
-						(getCurrentState () == moving_up) ? "^" :
-						(getCurrentState () == moving_down) ? "v" :
-															  "B")
-		<< (int) getMostDistantCall()
+    os  << "| "
+		<< setw(2) << (int) obj.getCurrentStore()
+        << ":" << ((obj.getCurrentState () == resting) ? "**" : 
+						(obj.getCurrentState () == moving_up) ? "/\\" :
+						(obj.getCurrentState () == moving_down) ? "\\/" :
+						(obj.getCurrentState () == boarding_down) ? "Bv" :
+															  "B^")
+		<< setw(2) << (int) obj.getMostDistantCall()
         << ":" 
-		<< (int) (capacity() - freePlaces());
-		str = os.str();
-		return str;
+		<< setw(2) << (int) (obj.capacity() - obj.freePlaces())
+        << " |"; 
+		return os;
 }

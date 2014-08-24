@@ -2,11 +2,14 @@ Debug
 m4
 *.iml
 *.cache
-
+*~
+*.o
+.deps
 .anjuta*
 .idea*
 .project*
 Makefile.in
+Makefile
 aclocal.m4
 compile
 config.guess
@@ -16,4 +19,9 @@ depcomp
 install-sh
 ltmain.sh
 missing
+*.swp
+CreditSwissElevator
+*.log
+*.status
+libtool
 

@@ -11,7 +11,7 @@
 
 #include "Configuration.h"
 
-enum ElevatorStates {resting, moving_up, moving_down, boarding};
+enum ElevatorStates {resting, moving_up, moving_down, boarding_up, boarding_down};
 
 struct ElevatorStateData
 {
@@ -28,18 +28,17 @@ public:
     Elevator(string const &key);
     Elevator(const Elevator &other);
     virtual ~Elevator();
-    inline bool goingUp() const {return (_state.most_distant_call > _state.current_store);};
-    inline bool boardingEnds(){return (_state.boarding_timer == 0);}
+    inline bool goingUp() const {return (getCurrentState() != boarding_down && getCurrentState() != moving_down);}
+    inline bool boardingEnds() const {return (_state.boarding_timer == 0);}
     inline unsigned char freePlaces() const {return _capacity - _state.passengers;};
     inline bool empty() const {return (0 == _state.passengers);};
     inline unsigned char capacity() const {return _capacity;};
-    inline unsigned char getCurrentStore() {return _state.current_store;}
+    inline unsigned char getCurrentStore() const {return _state.current_store;}
     inline ElevatorStates getCurrentState() const {return _state.elevatorIs;}
-    inline unsigned char getMostDistantCall() {return _state.most_distant_call;}
+    inline unsigned char getMostDistantCall() const {return _state.most_distant_call;}
     inline void setMostDistantCall(unsigned char store) {assert(_destinations.size() > store); _state.most_distant_call = store;}
-    inline unsigned char serves(unsigned char store) {return !(_skip_from <= store && _skip_to >= store );}
-    inline bool hasPassengersTo(unsigned char store) {return (_destinations[store] > 0);}
-	string const & prettyPrint(string &str);
+    inline unsigned char serves(unsigned char store) const {return !(_skip_from <= store && _skip_to >= store );}
+    inline bool hasPassengersTo(unsigned char store) const {return (_destinations[store] > 0);}
 
     unsigned char boardPassengers(unsigned char number, unsigned char dest_store);
     unsigned char unboardPassengers();
@@ -60,5 +59,8 @@ private:
     
     vector<unsigned int>  _destinations;
 };
+
+std::ostream& operator<<(std::ostream& os, const Elevator& obj);
+
 
 #endif /* defined(__CreditSwissElevator__Elevator__) */

@@ -43,7 +43,7 @@ Elevator::Elevator(string const &key)
     _state.passengers = 0;
 	_state.most_distant_call = 0;
 	_state.boarding_timer = 0;
-    _destinations.resize(Configuration::get(string("building.stores")), 0);
+    _destinations.resize(Configuration::get(string("building.stores")));
 
     // Configure an elevator
     int config_value = -1;
@@ -65,40 +65,38 @@ Elevator::~Elevator()
 {
 }
 
-people_t
-Elevator::boardPassengers(people_t number, store_t dest_store)
+void
+Elevator::boardPassenger(Person const &p)
 {
-	assert (serves(dest_store));
-	
-    people_t boarded = freePlaces() < number ? freePlaces() : number;
-    _destinations[dest_store] += boarded;
-    _state.passengers += boarded;
+	assert(serves(p.destination()));
+	assert(freePlaces() > 0);
+
+    _destinations[p.destination()].push_back(p);
+    _state.passengers++;
     
-    if ((dest_store > _state.current_store && _state.most_distant_call < dest_store)
-        || (dest_store < _state.current_store && _state.most_distant_call > dest_store)
+    if ((p.destination() > _state.current_store && _state.most_distant_call < p.destination())
+        || (p.destination() < _state.current_store && _state.most_distant_call > p.destination())
         )
     {
-        setMostDistantCall(dest_store);
+        setMostDistantCall(p.destination());
     }
-
-    return boarded;
 }
 
-people_t
-Elevator::unboardPassengers()
+Person const&
+Elevator::unboardPassenger()
 {
-    people_t unboarded = _destinations[_state.current_store];
-    _destinations[_state.current_store] = 0;
-    _state.passengers -= unboarded;
-    return unboarded;
+	Person const &p = _destinations[_state.current_store].front();
+	_destinations[_state.current_store].pop_front();
+    _state.passengers--;
+    return p;
 }
 
 void
 Elevator::keep(ElevatorStates new_state)
 {
 	assert (getCurrentState () == new_state);
-	
-    switch(new_state)
+
+	switch(new_state)
     {
         case resting:
             break;
@@ -149,7 +147,7 @@ std::ostream& operator<<(std::ostream& os, const Elevator& obj)
 															  "B^")
 		<< setw(2) << (int) obj.getMostDistantCall()
         << ":" 
-		<< setw(2) << (int) (obj.capacity() - obj.freePlaces())
+		<< setw(2) << (int) obj.passengers()
         << " |"; 
 		return os;
 }

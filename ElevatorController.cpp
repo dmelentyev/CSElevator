@@ -21,6 +21,8 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
 #include <iomanip>
+#include <cstdlib>
+#include <time.h>
 
 ElevatorController ElevatorController::_controller;
 boost::mutex ElevatorController::_mtx;
@@ -64,21 +66,51 @@ ElevatorController::run()
     // Create destinations for people on a ground floor
     store_t store_capacity = Configuration::get("building.store.capacity");
     counter_t iteration=0L;
+
+	vector<people_t> destinations(Store::maxStore()+1, 100);
+	srand(time(NULL));
+	// e.g. 100*100, skipping groung floor
+	people_t max_people = (Store::maxStore()+1) * store_capacity;
+	long s=0L;
+	for (people_t p=0; p < max_people; p++)
+	{
+		s = rand() % Store::maxStore() +1; // 1..99
+		if (0 == destinations[s])
+		{
+			long s1 = s;
+			int inc = 1;
+
+			//Search up or down?
+			if (Store::maxStore() / 2 > s)
+				inc = -1;
+			
+			for (; s < destinations.size() 
+			    && s >= 0 
+			    && destinations[s] == 0
+			    && s != s1; s += inc)
+			{
+				if ((s+inc) == 0)
+					s = destinations.size()-1;
+				else if ((s+inc) == destinations.size())
+					s = 0;
+			}
+
+			if (s == s1)
+				break; // Done filling the initiakl queue
+		}
+		destinations[s]--;
+		Person person;
+		if (s > Store::maxStore())
+			assert(s <= Store::maxStore());
+		person.setDestination(s);
+		getStore(0).enqueuePassenger(person, 0);
+	}
+
+	bool elevatorsAreNotResting = true;
 	
-    for (store_t s=0; s < getStore(0).maxStore(); s++)
-    {
-		getStore(0).addPassengersTo(s, store_capacity);
-		cout << getStore(0) << endl;
-    }
-    
-    while(getStore(0).hasPassengers()
-          || getElevators()[0].getCurrentState() != resting
-          || getElevators()[1].getCurrentState() != resting
-          || getElevators()[2].getCurrentState() != resting
-          )
-    {
+    do {
         // Check elevator calls
-        for(store_t i=0; i < getStore(0).maxStore(); i++)
+        for(store_t i=0; i < Store::maxStore(); i++)
         {
 			Store const &st = getStore(i);
             // Find nearest elevator that goes appropriate direction or is resting
@@ -196,7 +228,7 @@ ElevatorController::run()
                 case boarding_up:
                 case boarding_down:
                     // unboard
-                    getStore(store).getPeopleFrom(el);
+                    getStore(store).getPeopleFrom(el, iteration);
                     // if we were moving up - board more people going up (and vice versa)
                     getStore(store).putPeopleInto(el);
 
@@ -249,6 +281,20 @@ ElevatorController::run()
             }
         }
 		cout << endl;
+
+		elevatorsAreNotResting=false;
+		for (int i=0; i < getElevators().size(); i++)
+		{
+			elevatorsAreNotResting |= getElevators()[i].getCurrentState() != resting;
+		}
+
     }
-		cout << "Done" << endl;   
+    while(getStore(0).hasPassengers() || elevatorsAreNotResting);
+	cout << "Done" << endl;
+
+	for(store_t s=0; s <= Store::maxStore(); s++)
+	{
+		cout << getStore(s) << endl;
+	}
+	cout << "Finished" << endl;
 }

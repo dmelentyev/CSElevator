@@ -21,6 +21,7 @@
 #define _ELEVATOR_H_
 
 #include "Configuration.h"
+#include "Person.h"
 
 enum ElevatorStates {resting, moving_up, moving_down, boarding_up, boarding_down};
 
@@ -44,15 +45,31 @@ public:
     inline people_t freePlaces() const {return _capacity - _state.passengers;};
     inline bool empty() const {return (0 == _state.passengers);};
     inline people_t capacity() const {return _capacity;};
+    inline people_t passengers() const {return _state.passengers;};
     inline store_t getCurrentStore() const {return _state.current_store;}
     inline ElevatorStates getCurrentState() const {return _state.elevatorIs;}
     inline store_t getMostDistantCall() const {return _state.most_distant_call;}
-    inline void setMostDistantCall(store_t store) {assert(_destinations.size() > store); _state.most_distant_call = store;}
-    inline bool serves(store_t store) const {return !(_skip_from <= store && _skip_to >= store );}
-    inline bool hasPassengersTo(store_t store) const {return (_destinations[store] > 0);}
+    inline void setMostDistantCall(store_t store) 
+	{
+		if (_destinations.size() <= store)
+			assert(_destinations.size() > store); 
+		_state.most_distant_call = store;
+	}
+    inline bool serves(store_t store) const 
+	{
+		if (_destinations.size() <= store)
+			assert(_destinations.size() > store); 
+		return !(_skip_from <= store && _skip_to >= store );
+	}
+    inline bool hasPassengersTo(store_t store) const 
+	{
+		if (_destinations.size() <= store)
+			assert(_destinations.size() > store); 
+		return (_destinations[store].size() > 0);
+	}
 
-    people_t boardPassengers(people_t number, store_t dest_store);
-    people_t unboardPassengers();
+    void boardPassenger(Person const& p);
+    Person const& unboardPassenger();
     void start(ElevatorStates new_state);
     void keep(ElevatorStates new_state);
     
@@ -68,7 +85,7 @@ private:
     ElevatorStateData _state;
     
     
-    vector<people_t>  _destinations;
+    vector<PeopleQueue>  _destinations;
 };
 
 std::ostream& operator<<(std::ostream& os, const Elevator& obj);

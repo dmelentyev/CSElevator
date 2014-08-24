@@ -19,6 +19,7 @@
 
 #include "Store.h"
 #include <boost/foreach.hpp>
+#include <iomanip>
 
 store_t Store::_max_stores_cache=0;
 
@@ -26,8 +27,9 @@ Store::Store(store_t store)
 {
     _store = store;
 	_max_time = _min_time = _tot_time = 0L;
+	_min_time = ~_min_time;
+	_min_time = ((unsigned long)_min_time) >> 1;
     _tot_people = 0;
-    _destinations.resize(maxStore(), 0);
 }
 
 Store::~Store()
@@ -37,56 +39,92 @@ Store::~Store()
 people_t
 Store::putPeopleInto(Elevator &elevator)
 {
-    people_t selected = 0, picked = 0;
-    people_t how_many = elevator.freePlaces();
-    bool     up = elevator.goingUp();
-	store_t  current_dest;
-
 	//Make sure elevator is at same store!
     assert (elevator.getCurrentStore() == storeNumber());
 
-    for (current_dest = 0; current_dest <= maxStore() && (selected < how_many); current_dest++)
-    {
-		if (passengersTo(current_dest) > 0)
+    people_t picked = 0;
+
+	PeopleQueue tmpQueue;
+	PeopleQueue *workingQueue = NULL;
+
+	if (elevator.goingUp() && hasPassengersUp())
+	{
+		workingQueue = &_queue_up; 
+	}
+	else if (!elevator.goingUp() && hasPassengersDown())
+	{
+		workingQueue = &_queue_down; 
+	}
+
+	if (NULL != workingQueue)
+	{
+		while(elevator.freePlaces() > 0 && !workingQueue->empty())
 		{
-		    if (   storeNumber() != current_dest 
-		        && elevator.serves(current_dest) 
-		        )
+			Person &p = workingQueue->front();
+			if (elevator.serves(p.destination()))
 			{
-
-				if (
-				      (up && current_dest > storeNumber())
-					|| (!up && current_dest < storeNumber())
-					)
-				{
-				    picked = min(passengersTo(current_dest), how_many);
-				    selected += picked;
-				    how_many -= picked;
-				    substractPassengersTo(current_dest, picked);
-					elevator.boardPassengers(picked, current_dest);
-				}
+				elevator.boardPassenger(p);
+				picked++;
 			}
+			else
+			{
+				tmpQueue.push_back(p);
+			}
+			workingQueue->pop_front();
 		}
-    }
-
-	return selected;
+		
+		while (!tmpQueue.empty())
+		{
+			Person &p = tmpQueue.front();
+			workingQueue->push_front(p);
+			tmpQueue.pop_front();
+		}
+	}
+	
+	return picked;
 }
 
 people_t
-Store::getPeopleFrom(Elevator &elevator)
+Store::getPeopleFrom(Elevator &elevator, counter_t iteration)
 {
-    people_t picked = elevator.unboardPassengers();
-    _destinations[_store] += picked;
+	people_t picked = 0;
+	while (elevator.hasPassengersTo(storeNumber()))
+	{
+		picked++;
+		Person p = elevator.unboardPassenger();
+		updateStats(iteration - p.elevatorTimer());
+		_queue_staying.push_back(p);
+	}
     return picked;
+}
+
+void counter2time(double *hours, double *minutes, double *seconds, counter_t iteration)
+{
+		*hours = iteration/3600;
+		*minutes = (iteration - int(*hours)*3600)/60;
+		*seconds = iteration - int(*hours)*3600 - int(*minutes)*60;
 }
 
 std::ostream& operator<<(std::ostream& os, const Store& obj)
 {
-    os  << "s" << obj.storeNumber();
-	for(store_t i; i < obj.maxStore (); i++)
-	{
-		os << ":" << hex << obj.passengersTo(i) << dec;
-	}
+	double hours, minutes, seconds;
+    os  << "s" << setw(2) << (int) obj.storeNumber() << " | ";
+	counter2time (&hours, &minutes, &seconds, obj.minTime());
+	os << ":" << setw(2) << setfill('0') << int(hours) << ":"
+			  << setw(2) << setfill('0') << int(minutes) << ":"
+			  << setw(2) << setfill('0') << int(seconds) << " ";
+	
+	counter2time (&hours, &minutes, &seconds, obj.maxTime());
+	os << ":" << setw(2) << setfill('0') << int(hours) << ":"
+			  << setw(2) << setfill('0') << int(minutes) << ":"
+			  << setw(2) << setfill('0') << int(seconds) << " ";
+	
+	counter2time (&hours, &minutes, &seconds, obj.avgTime());
+	os << ":" << setw(2) << setfill('0') << int(hours) << ":"
+			  << setw(2) << setfill('0') << int(minutes) << ":"
+			  << setw(2) << setfill('0') << int(seconds) << " ";
+	
 
+	os << " |";
 	return os;
 }

@@ -25,24 +25,34 @@ class Person
 public:
 	Person()
 	{
-		resetElevatorTimer();
+		resetElevatorTimer(0);
 		setDestination(0);
+	}
+	Person(Person const& other)
+	{
+		resetElevatorTimer(other.elevatorTimer());
+		setDestination(other.destination());
 	}
 	virtual ~Person()
 	{
 	}
 	inline store_t destination() const {return _destination;}
-	inline void setDestination(stor_t dest){_destination = destination;}
-	inline void resetElevatorTimer() {_time_in_elevator = 0;}
+	inline void setDestination(store_t dest)
+	{
+		_destination = dest;
+	}
+	inline void resetElevatorTimer(counter_t iteration) {_time_in_elevator = iteration;}
 	inline void incElevatorTimer() {_time_in_elevator++;}
 	inline counter_t elevatorTimer() const {return _time_in_elevator;}
 
 protected:
 
 private:
-	stor_t    _destination;
+	store_t    _destination;
 	counter_t _time_in_elevator;
 };
+
+typedef deque<Person> PeopleQueue;
 
 #endif // _PERSON_H_
 

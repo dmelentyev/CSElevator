@@ -1,6 +1,6 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*-  */
 /*
- * main.cpp
+ * Person.h
  * Copyright (C) 2014 Dennis Melentyev <dennis.melentyev@gmail.com>
  *
  * CreditSwissElevator is free software: you can redistribute it and/or modify it
@@ -17,29 +17,34 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iostream>
-#include "Configuration.h"
-#include "ElevatorController.h"
-#include "version.h"
+#ifndef _PERSON_H_
+#define _PERSON_H_
 
-using namespace std;
-
-int main(int ARGC, char** ARGV)
+class Person
 {
-    { /** Program version info banner */
-        string progpath(ARGV[0]);
-        size_t lastslash = progpath.find_last_of('/');
-        cout << progpath.substr(lastslash+1) << " v" << AutoVersion::FULLVERSION_STRING << endl;
-    }
+public:
+	Person()
+	{
+		resetElevatorTimer();
+		setDestination(0);
+	}
+	virtual ~Person()
+	{
+	}
+	inline unsigned char destination() const {return _destination;}
+	inline void setDestination(unsigned char dest){_destination = destination;}
+	inline void resetElevatorTimer() {_time_in_elevator = 0;}
+	inline void incElevatorTimer() {_time_in_elevator++;}
+	inline void elevatorTimer() const {return _time_in_elevator;}
 
-    // Load configuration
-    Configuration::load("config.cfg");
+protected:
 
-    // Setup ElevatorController
-    ElevatorController::setup();
-    
-    // Start controller
-    ElevatorController::run();
-    
-    return 0;
-}
+private:
+	unsigned char _destination;
+	long long     _time_in_elevator;
+	
+	
+};
+
+#endif // _PERSON_H_
+

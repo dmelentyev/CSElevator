@@ -19,10 +19,3 @@
 
 #include "Person.h"
 
-void Person::setDestination(unsigned char dest)
-{
-	// TODO: Add implementation here
-}
-
-
-

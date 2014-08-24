@@ -65,12 +65,12 @@ Elevator::~Elevator()
 {
 }
 
-unsigned char
-Elevator::boardPassengers(unsigned char number, unsigned char dest_store)
+people_t
+Elevator::boardPassengers(people_t number, store_t dest_store)
 {
 	assert (serves(dest_store));
 	
-    unsigned char boarded = freePlaces() < number ? freePlaces() : number;
+    people_t boarded = freePlaces() < number ? freePlaces() : number;
     _destinations[dest_store] += boarded;
     _state.passengers += boarded;
     
@@ -84,10 +84,10 @@ Elevator::boardPassengers(unsigned char number, unsigned char dest_store)
     return boarded;
 }
 
-unsigned char
+people_t
 Elevator::unboardPassengers()
 {
-    unsigned char unboarded = _destinations[_state.current_store];
+    people_t unboarded = _destinations[_state.current_store];
     _destinations[_state.current_store] = 0;
     _state.passengers -= unboarded;
     return unboarded;

@@ -62,11 +62,10 @@ ElevatorController::run()
 {
     // Morning. People come to the office
     // Create destinations for people on a ground floor
-    unsigned int store_capacity = Configuration::get("building.store.capacity");
+    store_t store_capacity = Configuration::get("building.store.capacity");
+    counter_t iteration=0L;
 	
-    long long iteration=0L;
-	
-    for (unsigned char s=0; s < getStore(0).maxStore(); s++)
+    for (store_t s=0; s < getStore(0).maxStore(); s++)
     {
 		getStore(0).addPassengersTo(s, store_capacity);
 		cout << getStore(0) << endl;
@@ -79,35 +78,36 @@ ElevatorController::run()
           )
     {
         // Check elevator calls
-        for(unsigned int i=0; i < getStore(0).maxStore(); i++)
+        for(store_t i=0; i < getStore(0).maxStore(); i++)
         {
 			Store const &st = getStore(i);
             // Find nearest elevator that goes appropriate direction or is resting
             BOOST_FOREACH(Elevator &el, getElevators())
             {
-                if (el.serves(st.number())
+                if (el.serves(st.storeNumber())
                     && st.hasPassengers()
                     && (
                          el.getCurrentState() == resting
                         || (
-                            el.getCurrentStore() < st.number()
+                            el.getCurrentStore() < st.storeNumber()
                             && el.getCurrentState() == moving_up
-                            && el.getMostDistantCall() < st.number()
+                            && el.getMostDistantCall() < st.storeNumber()
                             )
                         || (
-                            el.getCurrentStore() > st.number()
+                            el.getCurrentStore() > st.storeNumber()
                             && el.getCurrentState() == moving_down
-                            && el.getMostDistantCall() > st.number()
+                            && el.getMostDistantCall() > st.storeNumber()
                             )
                         )
                     )
                 {
-                    el.setMostDistantCall(st.number());
+                    el.setMostDistantCall(st.storeNumber());
                 }
             }
         }
         
         iteration++;
+
 		double hours, minutes, seconds;
 
 		hours = iteration/3600;
@@ -117,12 +117,12 @@ ElevatorController::run()
         cout << setw(2) << setfill('0') << int(hours) << ":"
 			 << setw(2) << setfill('0') << int(minutes) << ":"
 			 << setw(2) << setfill('0') << int(seconds) << " ";
-			
-        // Change states
+
+		// Change states
         BOOST_FOREACH(Elevator &el, getElevators())
         {
 			cout << "   " << el;
-            unsigned char store = el.getCurrentStore();
+            store_t store = el.getCurrentStore();
             switch (el.getCurrentState())
             {
                 case moving_up:

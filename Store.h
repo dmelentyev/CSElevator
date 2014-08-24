@@ -23,13 +23,15 @@
 #include "Configuration.h"
 #include "Elevator.h"
 
+typedef unordered_map<store_t, people_t> Calls;
+
 class Store
 {
     public:
-    Store(unsigned char store);
+    Store(store_t store);
     virtual ~Store();
-    unsigned int putPeopleInto(Elevator &elevator);
-    unsigned int getPeopleFrom(Elevator &elevator);
+    people_t putPeopleInto(Elevator &elevator);
+    people_t getPeopleFrom(Elevator &elevator);
     inline bool hasPassengers() const 
 	{
 		return (hasPassengersUp() || hasPassengersDown());
@@ -37,7 +39,7 @@ class Store
     inline bool hasPassengersUp() const 
 	{
 		int p;
-		unsigned char s, maxstore = maxStore();
+		store_t s, maxstore = maxStore();
 		
 		for( s = _store+1, p = 0; s <= maxstore && p == 0; s++ )
 		{
@@ -48,47 +50,57 @@ class Store
     inline bool hasPassengersDown() const 
 	{
 		int p;
-		unsigned char s;
+		store_t s;
 		for( s = 0, p = 0; s < _store && p == 0; s++ )
 		{
 			p = passengersTo (s);
 		}
 		return (p != 0);
 	}
-    inline unsigned int passengersTo(unsigned char store) const 
+    inline people_t passengersTo(store_t store) const 
 	{
 		if (store > maxStore()) 
 			assert(store <= maxStore()); 
 		return _destinations[store];
 	}
-    inline unsigned int addPassengersTo(unsigned char store, int passengers)
+		
+    inline people_t addPassengersTo(store_t store, people_t p_in)
 	{
 		assert(store <= maxStore()); 
-		_destinations[store] += passengers; 
+		_destinations[store] += p_in; 
 		return _destinations[store];
 	}
 		
-    inline unsigned char number() const {return _store;}
-    inline unsigned char maxStore() const
+    inline people_t substractPassengersTo(store_t store, people_t p_out)
 	{
-		if(_destinations.size() == 0 || _destinations.size() > 100)
+		assert(store <= maxStore()); 
+		_destinations[store] -= p_out; 
+		return _destinations[store];
+	}
+		
+    inline store_t storeNumber() const {return _store;}
+		
+    static inline store_t maxStore()
+	{
+		if (0 == _max_stores_cache)
 		{
-			assert(_destinations.size() > 0);
-			assert(_destinations.size() <= 100);
+			_max_stores_cache = Configuration::get("building.stores");
+			assert(_max_stores_cache > 0);
 		}
-		unsigned char ret = _destinations.size()-1;
-		return ret;
+		return _max_stores_cache;
 	}
 
     protected:
     private:
-    
-    unsigned char _store;
-    long long _max_time;
-    long long _min_time;
-    long long _tot_time;
-    unsigned char _tot_people;
-    vector<unsigned int>  _destinations;
+
+	static store_t _max_stores_cache;
+    store_t _store;
+    counter_t _max_time;
+    counter_t _min_time;
+    counter_t _tot_time;
+    people_t _tot_people;
+	vector<people_t> _destinations;
+//    Calls  _destinations;
 
 };
 

@@ -20,50 +20,50 @@
 #include "Store.h"
 #include <boost/foreach.hpp>
 
-Store::Store(unsigned char store)
+store_t Store::_max_stores_cache=0;
+
+Store::Store(store_t store)
 {
     _store = store;
 	_max_time = _min_time = _tot_time = 0L;
     _tot_people = 0;
-
-    int stores = Configuration::get("building.stores");
-    _destinations.resize(stores, 0);
+    _destinations.resize(maxStore(), 0);
 }
 
 Store::~Store()
 {
 }
 
-unsigned int
+people_t
 Store::putPeopleInto(Elevator &elevator)
 {
-    unsigned int selected = 0, picked = 0;
-    unsigned int how_many = elevator.freePlaces();
-    bool up = elevator.goingUp();
-	unsigned char current_dest;
+    people_t selected = 0, picked = 0;
+    people_t how_many = elevator.freePlaces();
+    bool     up = elevator.goingUp();
+	store_t  current_dest;
 
 	//Make sure elevator is at same store!
-    assert (elevator.getCurrentStore() == number());
+    assert (elevator.getCurrentStore() == storeNumber());
 
     for (current_dest = 0; current_dest <= maxStore() && (selected < how_many); current_dest++)
     {
 		if (passengersTo(current_dest) > 0)
 		{
-		    if (   number() != current_dest 
+		    if (   storeNumber() != current_dest 
 		        && elevator.serves(current_dest) 
 		        )
 			{
 
 				if (
-				      (up && current_dest > number())
-					|| (!up && current_dest < number())
+				      (up && current_dest > storeNumber())
+					|| (!up && current_dest < storeNumber())
 					)
 				{
 				    picked = min(passengersTo(current_dest), how_many);
 				    selected += picked;
 				    how_many -= picked;
-				    addPassengersTo(current_dest, 0-picked);
-				    elevator.boardPassengers(picked, current_dest);
+				    substractPassengersTo(current_dest, picked);
+					elevator.boardPassengers(picked, current_dest);
 				}
 			}
 		}
@@ -72,20 +72,20 @@ Store::putPeopleInto(Elevator &elevator)
 	return selected;
 }
 
-unsigned int
+people_t
 Store::getPeopleFrom(Elevator &elevator)
 {
-    unsigned int picked = elevator.unboardPassengers();
+    people_t picked = elevator.unboardPassengers();
     _destinations[_store] += picked;
     return picked;
 }
 
 std::ostream& operator<<(std::ostream& os, const Store& obj)
 {
-    os  << "s" << obj.number();
-	for(unsigned int i; i < obj.maxStore (); i++)
+    os  << "s" << obj.storeNumber();
+	for(store_t i; i < obj.maxStore (); i++)
 	{
-		os << ":" << hex << obj.passengersTo (i) << dec;
+		os << ":" << hex << obj.passengersTo(i) << dec;
 	}
 
 	return os;

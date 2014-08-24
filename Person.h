@@ -31,19 +31,17 @@ public:
 	virtual ~Person()
 	{
 	}
-	inline unsigned char destination() const {return _destination;}
-	inline void setDestination(unsigned char dest){_destination = destination;}
+	inline store_t destination() const {return _destination;}
+	inline void setDestination(stor_t dest){_destination = destination;}
 	inline void resetElevatorTimer() {_time_in_elevator = 0;}
 	inline void incElevatorTimer() {_time_in_elevator++;}
-	inline void elevatorTimer() const {return _time_in_elevator;}
+	inline counter_t elevatorTimer() const {return _time_in_elevator;}
 
 protected:
 
 private:
-	unsigned char _destination;
-	long long     _time_in_elevator;
-	
-	
+	stor_t    _destination;
+	counter_t _time_in_elevator;
 };
 
 #endif // _PERSON_H_

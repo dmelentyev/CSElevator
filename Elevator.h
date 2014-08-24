@@ -27,10 +27,10 @@ enum ElevatorStates {resting, moving_up, moving_down, boarding_up, boarding_down
 struct ElevatorStateData
 {
     ElevatorStates elevatorIs;
-    unsigned char current_store;
-    unsigned char boarding_timer;
-    unsigned char passengers;
-    unsigned char most_distant_call;
+    store_t   current_store;
+    counter_t boarding_timer;
+    people_t  passengers;
+    store_t   most_distant_call;
 };
 
 class Elevator
@@ -41,34 +41,34 @@ public:
     virtual ~Elevator();
     inline bool goingUp() const {return (getCurrentState() != boarding_down && getCurrentState() != moving_down);}
     inline bool boardingEnds() const {return (_state.boarding_timer == 0);}
-    inline unsigned char freePlaces() const {return _capacity - _state.passengers;};
+    inline people_t freePlaces() const {return _capacity - _state.passengers;};
     inline bool empty() const {return (0 == _state.passengers);};
-    inline unsigned char capacity() const {return _capacity;};
-    inline unsigned char getCurrentStore() const {return _state.current_store;}
+    inline people_t capacity() const {return _capacity;};
+    inline store_t getCurrentStore() const {return _state.current_store;}
     inline ElevatorStates getCurrentState() const {return _state.elevatorIs;}
-    inline unsigned char getMostDistantCall() const {return _state.most_distant_call;}
-    inline void setMostDistantCall(unsigned char store) {assert(_destinations.size() > store); _state.most_distant_call = store;}
-    inline unsigned char serves(unsigned char store) const {return !(_skip_from <= store && _skip_to >= store );}
-    inline bool hasPassengersTo(unsigned char store) const {return (_destinations[store] > 0);}
+    inline store_t getMostDistantCall() const {return _state.most_distant_call;}
+    inline void setMostDistantCall(store_t store) {assert(_destinations.size() > store); _state.most_distant_call = store;}
+    inline bool serves(store_t store) const {return !(_skip_from <= store && _skip_to >= store );}
+    inline bool hasPassengersTo(store_t store) const {return (_destinations[store] > 0);}
 
-    unsigned char boardPassengers(unsigned char number, unsigned char dest_store);
-    unsigned char unboardPassengers();
+    people_t boardPassengers(people_t number, store_t dest_store);
+    people_t unboardPassengers();
     void start(ElevatorStates new_state);
     void keep(ElevatorStates new_state);
     
 protected:
 private:
     
-    unsigned char _skip_from; // inclusive
-    unsigned char _skip_to;   // inclusive
-    unsigned char _capacity;
-    unsigned char _speed;
-    unsigned char _stop_time;
+    store_t _skip_from; // inclusive
+    store_t _skip_to;   // inclusive
+    people_t _capacity;
+    counter_t _speed;
+    counter_t _stop_time;
     bool          _skip_when_full;
     ElevatorStateData _state;
     
     
-    vector<unsigned int>  _destinations;
+    vector<people_t>  _destinations;
 };
 
 std::ostream& operator<<(std::ostream& os, const Elevator& obj);

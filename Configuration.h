@@ -10,6 +10,10 @@
  *
  */
 
+typedef unsigned char store_t;
+typedef unsigned int  people_t;
+typedef long          counter_t;
+
 using namespace boost;
 using namespace boost::interprocess;
 using namespace std;

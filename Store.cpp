@@ -47,11 +47,11 @@ Store::putPeopleInto(Elevator &elevator)
 	PeopleQueue tmpQueue;
 	PeopleQueue *workingQueue = NULL;
 
-	if (elevator.goingUp() && hasPassengersUp())
+	if (elevator.goingUp() && hasPassengersUp(elevator))
 	{
 		workingQueue = &_queue_up; 
 	}
-	else if (!elevator.goingUp() && hasPassengersDown())
+	else if (!elevator.goingUp() && hasPassengersDown(elevator))
 	{
 		workingQueue = &_queue_down; 
 	}
@@ -93,38 +93,30 @@ Store::getPeopleFrom(Elevator &elevator, counter_t iteration)
 		picked++;
 		Person p = elevator.unboardPassenger();
 		updateStats(iteration - p.elevatorTimer());
-		_queue_staying.push_back(p);
+		enqueuePassenger(p, iteration);
 	}
     return picked;
-}
-
-void counter2time(double *hours, double *minutes, double *seconds, counter_t iteration)
-{
-		*hours = iteration/3600;
-		*minutes = (iteration - int(*hours)*3600)/60;
-		*seconds = iteration - int(*hours)*3600 - int(*minutes)*60;
 }
 
 std::ostream& operator<<(std::ostream& os, const Store& obj)
 {
 	double hours, minutes, seconds;
-    os  << "s" << setw(2) << (int) obj.storeNumber() << " | ";
+    os  << "s" << setw(2) << setfill('0') << (int) obj.storeNumber() << " | ";
 	counter2time (&hours, &minutes, &seconds, obj.minTime());
-	os << ":" << setw(2) << setfill('0') << int(hours) << ":"
-			  << setw(2) << setfill('0') << int(minutes) << ":"
-			  << setw(2) << setfill('0') << int(seconds) << " ";
+	os << setw(2) << setfill('0') << int(hours) << ":"
+	   << setw(2) << setfill('0') << int(minutes) << ":"
+	   << setw(2) << setfill('0') << int(seconds) << " ";
 	
 	counter2time (&hours, &minutes, &seconds, obj.maxTime());
-	os << ":" << setw(2) << setfill('0') << int(hours) << ":"
-			  << setw(2) << setfill('0') << int(minutes) << ":"
-			  << setw(2) << setfill('0') << int(seconds) << " ";
+	os << setw(2) << setfill('0') << int(hours) << ":"
+	   << setw(2) << setfill('0') << int(minutes) << ":"
+	   << setw(2) << setfill('0') << int(seconds) << " ";
 	
 	counter2time (&hours, &minutes, &seconds, obj.avgTime());
-	os << ":" << setw(2) << setfill('0') << int(hours) << ":"
-			  << setw(2) << setfill('0') << int(minutes) << ":"
-			  << setw(2) << setfill('0') << int(seconds) << " ";
+	os << setw(2) << setfill('0') << int(hours) << ":"
+	   << setw(2) << setfill('0') << int(minutes) << ":"
+	   << setw(2) << setfill('0') << int(seconds) << " ";
 	
-
 	os << " |";
 	return os;
 }

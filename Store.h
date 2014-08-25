@@ -30,47 +30,45 @@ class Store
 {
     public:
     Store(store_t store);
-    virtual ~Store();
+	virtual ~Store();
+		
     people_t putPeopleInto(Elevator &elevator);
     people_t getPeopleFrom(Elevator &elevator, counter_t iteration);
-    inline bool hasPassengers() const 
-	{
-		return (hasPassengersUp() || hasPassengersDown());
-	}
-    inline bool hasPassengersUp() const 
-	{
-		return !_queue_up.empty();
-	}
-    inline bool hasPassengersDown() const 
-	{
-		return !_queue_down.empty();
-	}
-		
-    inline people_t passengers__To(store_t store) const 
-	{
-		assert(store <= maxStore());
-		try 
-		{
-			return 0; //destinations.at(store);
-		}
-		catch (out_of_range)
-		{
-			return 0;
-		}
-	}
-		
-    inline people_t addPassengers__To(store_t store, people_t p_in)
-	{
-		assert(store <= maxStore()); 
-		//_destinations[store] += p_in; 
-		return 0;//_destinations[store];
-	}
+    inline people_t passengerQueueSize() const 
+    {
+	    return ( _queue_up.size() + _queue_down.size() );
+    }
 
-    inline people_t substractPassengers__To(store_t store, people_t p_out)
+    inline bool passengerQueueEmpty() const 
+    {
+	    return ( _queue_up.empty() && _queue_down.empty() );
+    }
+
+    inline bool hasPassengers(Elevator const& el) const 
 	{
-		assert(store <= maxStore()); 
-		// _destinations[store] -= p_out; 
-		return 0; //_destinations[store];
+		return (hasPassengersUp(el) || hasPassengersDown(el));
+	}
+    inline bool hasPassengersUp(Elevator const& el) const 
+	{
+		if (!_queue_up.empty())
+		{
+			PeopleQueue::const_iterator i = _queue_up.begin();
+			for(; i!=_queue_up.end(); i++)
+				if (el.serves( (*i).destination()))
+					return true;
+		}
+		return false;
+	}
+    inline bool hasPassengersDown(Elevator const& el) const 
+	{
+		if (!_queue_down.empty())
+		{
+			PeopleQueue::const_iterator i = _queue_down.begin();
+			for(; i!=_queue_down.end(); i++)
+				 if (el.serves((*i).destination()))
+					return true;
+		}
+		return false;
 	}
 		
     inline store_t storeNumber() const {return _store;}
@@ -79,7 +77,7 @@ class Store
 	{
 		if (0 == _max_stores_cache)
 		{
-			_max_stores_cache = Configuration::get("building.stores")-1;
+			_max_stores_cache = Configuration::get("building.stores", 100)-1;
 			assert(_max_stores_cache > 0);
 		}
 		return _max_stores_cache;
@@ -87,10 +85,22 @@ class Store
 
 	inline void updateStats(counter_t delta)
 	{
-		_max_time = (delta > _max_time) ? delta : _max_time;
-		_min_time = (delta < _min_time) ? delta : _min_time;
+		_max_time = max(delta, _max_time);
+		_min_time = min(delta, _min_time);
 		_tot_time += delta;
 		_tot_people++;
+	}
+		
+	inline void scheduleForExit(counter_t iteration)
+	{
+		// If people are coming from office
+		while (!_queue_staying.empty() 
+		    && _queue_staying.front().enqueued() == iteration)
+		{
+			Person p = _queue_staying.front();
+			enqueuePassenger(p, iteration);
+			_queue_staying.pop_front();
+		}
 	}
 		
 	inline void enqueuePassenger(Person const& person, counter_t iteration)
@@ -99,18 +109,20 @@ class Store
 		if (p.destination() > maxStore ())
 			assert(p.destination() <= maxStore());
 		
+		p.resetElevatorTimer(iteration);
 		if (p.destination() > storeNumber())
 		{
-			p.resetElevatorTimer(iteration);
 			_queue_up.push_back(p);
 		}
 		else if (p.destination() < storeNumber())
 		{
-			p.resetElevatorTimer(iteration);
 			_queue_down.push_back(p);
 		}
 		else 
 		{
+			// Schedule for exit in 9 hours. 8 working hours + 1 hour lunch
+			p.setDestination(0);
+			p.resetElevatorTimer(iteration + 9*3600);
 			_queue_staying.push_back(p);
 		}
 	}

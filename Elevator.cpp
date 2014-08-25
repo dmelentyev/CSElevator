@@ -43,23 +43,23 @@ Elevator::Elevator(string const &key)
     _state.passengers = 0;
 	_state.most_distant_call = 0;
 	_state.boarding_timer = 0;
-    _destinations.resize(Configuration::get(string("building.stores")));
+    _destinations.resize(Configuration::get("building.stores", 100));
 
     // Configure an elevator
     int config_value = -1;
-    config_value = Configuration::get(key + ".skip.from");
-    _skip_from = (config_value < 0) ? Configuration::get("building.stores") : config_value;
-    config_value = Configuration::get(key + ".skip.to");
-    _skip_to   = (config_value < 0) ? Configuration::get("building.stores") : config_value;
-    config_value = Configuration::get(key + ".skip.when.full");
+    config_value = Configuration::get(key + ".skip.from", 100);
+    _skip_from = (config_value < 0) ? Configuration::get("building.stores", 100) : config_value;
+    config_value = Configuration::get(key + ".skip.to", 100);
+    _skip_to   = (config_value < 0) ? Configuration::get("building.stores", 100) : config_value;
+    config_value = Configuration::get(key + ".skip.when.full", 1);
     _skip_when_full = (config_value < 0) ? true : (0 != config_value);
-    config_value = Configuration::get(key + ".capacity");
+    config_value = Configuration::get(key + ".capacity", 100);
     _capacity = (config_value < 0) ? 20 : config_value;
-    config_value = Configuration::get(key + ".speed");
+    config_value = Configuration::get(key + ".speed", 1);
     _speed = (config_value < 0) ? 1 : config_value;
-    config_value = Configuration::get(key + ".stop.time");
+    config_value = Configuration::get(key + ".stop.time", 5);
     _stop_time = (config_value < 0) ? 5 : config_value;
-    config_value = Configuration::get(key + ".resting.store");
+    config_value = Configuration::get(key + ".resting.store", 0);
     _resting_store = (config_value < 0) ? 0 : config_value;
 
 	_state.current_store = _resting_store;

@@ -20,6 +20,8 @@
 #ifndef _PERSON_H_
 #define _PERSON_H_
 
+#include "Configuration.h"
+
 class Person
 {
 public:
@@ -37,6 +39,7 @@ public:
 	{
 	}
 	inline store_t destination() const {return _destination;}
+	inline counter_t enqueued() const {return _time_in_elevator;}
 	inline void setDestination(store_t dest)
 	{
 		_destination = dest;

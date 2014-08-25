@@ -16,18 +16,12 @@ Configuration::Configuration()
     _config._values["elevator1.capacity"] = 20;
     _config._values["elevator1.skip.from"] = 1;
     _config._values["elevator1.skip.to"] = 49;
-    _config._values["elevator1.skip.when.full"] = 0;
-    _config._values["elevator1.speed"] = 1;
-    _config._values["elevator1.stop.time"] = 5;
     
     _config._values["elevator2.capacity"] = 20;
-    _config._values["elevator2.skip.when.full"] = 0;
-    _config._values["elevator2.speed"] = 1;
-    _config._values["elevator2.stop.time"] = 5;
     
     _config._values["elevator3.capacity"] = 20;
-    _config._values["elevator3.skip.from"] = 1;
-    _config._values["elevator3.skip.to"] = 50;
+    _config._values["elevator3.skip.from"] = 50;
+    _config._values["elevator3.skip.to"] = 99;
 
 
 }
@@ -44,10 +38,11 @@ Configuration::load(string const &filename)
 
     cout << "Reading from config file: " << filename << endl;
     ifstream configfile(filename.c_str());
-//    ifstream configfile(filename);
-	if (configfile.bad())
+
+	if (!configfile.good())
     {
-        cerr << "Unable to open file!" << endl;
+        cerr << "Unable to open file '" << filename << "'" << endl;
+        cerr << "Loading defaults" << endl;
     }
 
     while (configfile.good())
@@ -60,10 +55,27 @@ Configuration::load(string const &filename)
         if (!key.empty())
         {
             _config._values[key] = value;
-            cout << key << " " << value << endl;
         }
     }
 
     configfile.close();
 
 }
+
+std::ostream& operator<<(std::ostream& os, const Configuration& obj)
+{
+	for(ConfigMap::const_iterator i = obj.values().begin(); i != obj.values().end(); i++)
+	{
+            os << (*i).first << " " << (*i).second << endl;
+	}
+	return os;
+}
+
+void counter2time(double *hours, double *minutes, double *seconds, counter_t iteration)
+{
+		*hours = iteration/3600;
+		*minutes = (iteration - int(*hours)*3600)/60;
+		*seconds = iteration - int(*hours)*3600 - int(*minutes)*60;
+}
+
+

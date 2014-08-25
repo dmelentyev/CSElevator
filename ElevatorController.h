@@ -38,13 +38,41 @@ class ElevatorController
 		static vector<Elevator> & getElevators(){return _controller._elevators;}
 		static Store & getStore(store_t store){return _controller._stores[store];}
 		static void addStore(Store const &st){_controller._stores.push_back(st);}
+		static counter_t emulationStartTime()
+		{
+			return _controller._emulation_start_time;
+		}
+		static counter_t emulationStopTime()
+		{
+			return _controller._emulation_stop_time;
+		}
+    
+		static counter_t currentIteration()
+		{
+			return _controller._iteration;
+		}
+    
+		static void incIteration()
+		{
+			_controller._iteration++;
+		}
+    
+		static bool printElevator()
+		{
+			return _controller._print_elevator;
+		}
+    
+		counter_t _emulation_start_time;
+		counter_t _emulation_stop_time;
+		counter_t _iteration;
+		bool      _print_elevator;
+		PeopleQueue _lobby;
     
         vector<Elevator> _elevators;
         vector<Store>    _stores;
     
         ElevatorController();
         virtual ~ElevatorController();
-    
 };
 
 #endif /* defined(__CreditSwissElevator__ElevatorController__) */

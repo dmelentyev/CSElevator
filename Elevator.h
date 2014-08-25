@@ -42,10 +42,12 @@ public:
     virtual ~Elevator();
     inline bool goingUp() const {return (getCurrentState() != boarding_down && getCurrentState() != moving_down);}
     inline bool boardingEnds() const {return (_state.boarding_timer == 0);}
+    inline bool skipWhenFull() const {return _skip_when_full;}
     inline people_t freePlaces() const {return _capacity - _state.passengers;};
     inline bool empty() const {return (0 == _state.passengers);};
     inline people_t capacity() const {return _capacity;};
     inline people_t passengers() const {return _state.passengers;};
+    inline store_t restingStore() const {return _resting_store;}
     inline store_t getCurrentStore() const {return _state.current_store;}
     inline ElevatorStates getCurrentState() const {return _state.elevatorIs;}
     inline store_t getMostDistantCall() const {return _state.most_distant_call;}
@@ -78,10 +80,11 @@ private:
     
     store_t _skip_from; // inclusive
     store_t _skip_to;   // inclusive
-    people_t _capacity;
+	store_t _resting_store;
+	people_t _capacity;
     counter_t _speed;
     counter_t _stop_time;
-    bool          _skip_when_full;
+    bool      _skip_when_full;
     ElevatorStateData _state;
     
     

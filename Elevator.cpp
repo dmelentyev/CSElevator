@@ -30,6 +30,7 @@ Elevator::Elevator(const Elevator &other)
     _speed = other._speed;
     _stop_time = other._stop_time;
     _skip_when_full = other._skip_when_full;
+    _resting_store = other._resting_store;
     
     _destinations = other._destinations;
 
@@ -39,7 +40,6 @@ Elevator::Elevator(string const &key)
 {
     // Initial state
     _state.elevatorIs = resting;
-    _state.current_store = 0;
     _state.passengers = 0;
 	_state.most_distant_call = 0;
 	_state.boarding_timer = 0;
@@ -52,13 +52,17 @@ Elevator::Elevator(string const &key)
     config_value = Configuration::get(key + ".skip.to");
     _skip_to   = (config_value < 0) ? Configuration::get("building.stores") : config_value;
     config_value = Configuration::get(key + ".skip.when.full");
-    _skip_when_full = (config_value < 0) ? false : (0 != config_value);
+    _skip_when_full = (config_value < 0) ? true : (0 != config_value);
     config_value = Configuration::get(key + ".capacity");
     _capacity = (config_value < 0) ? 20 : config_value;
     config_value = Configuration::get(key + ".speed");
     _speed = (config_value < 0) ? 1 : config_value;
     config_value = Configuration::get(key + ".stop.time");
     _stop_time = (config_value < 0) ? 5 : config_value;
+    config_value = Configuration::get(key + ".resting.store");
+    _resting_store = (config_value < 0) ? 0 : config_value;
+
+	_state.current_store = _resting_store;
 }
 
 Elevator::~Elevator()

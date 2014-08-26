@@ -1,0 +1,49 @@
+building.elevators 5
+building.stores 100
+building.store.capacity 100
+
+elevator1.capacity 30
+elevator1.skip.from 1
+elevator1.skip.to 49
+elevator1.skip.when.full 1
+elevator1.speed 1
+elevator1.stop.time 5
+elevator1.resting.store 50
+
+elevator2.capacity 30
+elevator2.skip.from 1
+elevator2.skip.to 49
+elevator2.skip.when.full 1
+elevator2.speed 1
+elevator2.stop.time 5
+elevator2.resting.store 50
+
+elevator3.capacity 30
+elevator3.skip.when.full 1
+elevator3.speed 1
+elevator3.stop.time 5
+elevator3.resting.store 99
+
+elevator4.capacity 30
+elevator4.skip.from 50
+elevator4.skip.to 99
+elevator4.skip.when.full 1
+elevator4.resting.store 49
+
+elevator5.capacity 30
+elevator5.skip.from 50
+elevator5.skip.to 99
+elevator5.skip.when.full 1
+elevator5.resting.store 49
+
+elevator6.capacity 30
+elevator6.skip.when.full 1
+
+elevator7.capacity 30
+elevator7.skip.when.full 1
+
+elevator8.capacity 30
+elevator8.skip.from 20
+elevator8.skip.to 69
+elevator8.skip.when.full 1
+

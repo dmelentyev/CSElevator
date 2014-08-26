@@ -1,0 +1,7 @@
+building.elevators 50
+building.stores 100
+building.store.capacity 100
+building.emulation.start 28800
+building.emulation.stop  61200
+#building.print.elevator 1
+

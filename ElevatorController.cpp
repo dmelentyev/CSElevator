@@ -25,7 +25,7 @@
 #include <time.h>
 
 ElevatorController ElevatorController::_controller;
-boost::mutex ElevatorController::_mtx;
+//boost::mutex ElevatorController::_mtx;
 
 ElevatorController::ElevatorController()
 {
@@ -38,7 +38,7 @@ ElevatorController::~ElevatorController()
 void
 ElevatorController::setup()
 {
-    scoped_lock<boost::mutex> lock(_mtx);
+//    scoped_lock<boost::mutex> lock(_mtx);
 
     // Create Elevators
     int elevators = Configuration::get("building.elevators", 3);

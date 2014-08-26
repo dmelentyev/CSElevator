@@ -3,7 +3,7 @@
 #include <iostream>
 
 Configuration Configuration::_config;
-boost::mutex Configuration::_mtx;
+// boost::mutex Configuration::_mtx;
 
 Configuration::Configuration()
 {
@@ -34,7 +34,7 @@ Configuration::~Configuration()
 void
 Configuration::load(string const &filename)
 {
-    scoped_lock<boost::mutex> lock(_mtx);
+//    scoped_lock<boost::mutex> lock(_mtx);
 
     cout << "Reading from config file: " << filename << endl;
     ifstream configfile(filename.c_str());

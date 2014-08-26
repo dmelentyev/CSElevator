@@ -33,7 +33,7 @@ class ElevatorController
     protected:
     private:
         static ElevatorController _controller;
-        static boost::mutex _mtx;
+//        static boost::mutex _mtx;
 
 		static vector<Elevator> & getElevators(){return _controller._elevators;}
 		static vector<Store>    & getStores(){return _controller._stores;}

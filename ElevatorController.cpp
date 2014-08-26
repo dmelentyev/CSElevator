@@ -145,9 +145,10 @@ ElevatorController::run()
 			counter2time (&hours, &minutes, &seconds, currentIteration());
 			cout << setw(2) << setfill('0') << int(hours) << ":"
 				 << setw(2) << setfill('0') << int(minutes) << ":"
-				 << setw(2) << setfill('0') << int(seconds) << " "
-				 << setw(6) << int(getStore(0).passengerQueueSize());
+				 << setw(2) << setfill('0') << int(seconds) << " ";
+//				 << setw(6) << int(getStore(0).passengerQueueSize());
 		}
+		
 		// If people are coming to lobby
 		while (!_controller._lobby.empty() 
 		    && _controller._lobby.front().enqueued() == currentIteration ())
@@ -158,40 +159,14 @@ ElevatorController::run()
 			_controller._lobby.pop_front();
 		}
 
-        // Check elevator calls
-        for(store_t i=0; i < Store::maxStore(); i++)
-        {
-			Store &st = getStore(i);
-			// Schedule people for exit
-			st.scheduleForExit(currentIteration());
-			
-            // Find nearest elevator that goes appropriate direction or is resting
-            BOOST_FOREACH(Elevator &el, getElevators())
-            {
-                if (el.serves(st.storeNumber())
-                    && st.hasPassengers(el)
-                    && (
-                         el.getCurrentState() == resting
-                        || (
-                            el.getCurrentStore() < st.storeNumber()
-                            && el.getCurrentState() == moving_up
-                            && el.getMostDistantCall() < st.storeNumber()
-                            )
-                        || (
-                            el.getCurrentStore() > st.storeNumber()
-                            && el.getCurrentState() == moving_down
-                            && el.getMostDistantCall() > st.storeNumber()
-                            )
-                        )
-                    )
-                {
-                    el.setMostDistantCall(st.storeNumber());
-                }
-            }
-        }
-        
         incIteration();
 
+		// Schedule people for exit if any
+		BOOST_FOREACH(Store &st, getStores())
+		{
+			st.scheduleForExit(currentIteration());
+		}
+		
 		// Change states
         BOOST_FOREACH(Elevator &el, getElevators())
         {
@@ -203,96 +178,136 @@ ElevatorController::run()
             store_t store = el.getCurrentStore();
             switch (el.getCurrentState())
             {
-                case moving_up:
-                    // Serve passengers going to/from current store
-                    if (el.serves(store)
-                        && ( el.hasPassengersTo(store) 
-                            || (getStore(store).hasPassengersUp(el) 
-                                && (el.freePlaces() || !el.skipWhenFull()))))
-                    {
-                        el.start(boarding_up);
-                        
-                    }
-                    // handle empty, last store up, has passengers in opposit direction
-                    else if (el.serves(store)
-                             && el.empty() 
-                             && el.getMostDistantCall() == store
-                             && getStore(store).hasPassengersDown(el))
-                    {
-                        el.start(boarding_down);
-                    }
-                    // handle empty, going up, no calls above (reverse down for lower calls)
-                    else if (el.empty() 
-                             && el.getMostDistantCall() < store)
-                    {
-                        el.start(moving_down);
-                    }
-                    // handle empty, going up, no calls above start resting
-					else if (el.empty() 
-                             && el.getMostDistantCall() == store)
-                    {
-						el.setMostDistantCall(el.restingStore());
-						if (store < el.restingStore())
-						{
-							el.keep(moving_up);
-						}
-						else
-						{
-                    		el.start( (store > el.restingStore() ) ? moving_down : resting );
-						}
-                    }
-                    // Keep moving same direction otherwise
-                    else
-                    {
-                        el.keep(moving_up);
-                    }
-                    break;
                 case moving_down:
-                    // Serve passengers going to/from current store
-                    if (el.serves(store)
-                        && ( el.hasPassengersTo(store) 
-                            || (getStore(store).hasPassengersDown(el)
-                               && (el.freePlaces() || !el.skipWhenFull()))))
-                    {
-                        el.start(boarding_down);
-                    }
-                    // handle empty, last store down, has passengers in opposit direction
-                    else if (el.serves(store)
-                             && el.empty() 
-                             && el.getMostDistantCall() == store
-                             && getStore(store).hasPassengersUp(el))
-                    {
-                        el.start(boarding_up);
-                    }
-                    // handle empty, going down, a call comes from above with no calls below
-                    else if (el.empty() 
-                             && el.getMostDistantCall() > store)
-                    {
-                        el.start(moving_up);
-                    }
-                    // Keep moving same direction otherwise
-                    else if (el.getMostDistantCall() < store)
-                    {
-                        el.keep(moving_down);
-                    }
-                    // Go restinging if we are at MostDistantCall, empty and no calls
-                    else if (el.empty() 
-                             && el.getMostDistantCall() == store
-                             && el.restingStore() != store)
-                    {
-						el.setMostDistantCall(el.restingStore());
-						if(el.getMostDistantCall() < store)
-                    		el.keep(moving_down);
-						else
-                    		el.start(moving_up);
-                    }
-                    // Start resting if it is a ground floor and there's nobody to serve
-                    else if (el.empty() 
-                             && el.restingStore() == store)
-                    {
-                        el.start(resting);
-                    }
-                    break;
+                case moving_up:
+					// If we serve the store
+					if (el.serves(store))
+					{
+						//If we have passengers to here
+						if (el.hasPassengersTo(store))
+						{
+							el.start( el.goingUp() ? boarding_up : boarding_down);
+							break;
+						}
+
+						// If we have room or we must stop even if there's no room
+						if (el.freePlaces() || !el.skipWhenFull())
+						{
+							// if current store has passengers in same direction and we can serve at least one
+							if ( el.goingUp() && getStore(store).hasPassengersUp(el))
+							{
+		                        el.start(boarding_up);
+								break;
+							}
+
+							if ( (! el.goingUp()) && getStore(store).hasPassengersDown(el))
+							{
+		                        el.start(boarding_down);
+								break;
+							}
+							
+
+							// if current store is the last one and has passengers in opposite direction and we can serve at least one
+							if (el.getMostDistantCall() == store)
+							{
+								if ( el.goingUp() && getStore(store).hasPassengersDown(el))
+								{
+				                    el.start(boarding_down);
+									break;
+								}
+
+								if ( (! el.goingUp()) && getStore(store).hasPassengersUp(el))
+								{
+				                    el.start(boarding_up);
+									break;
+								}
+							}
+						}
+					}
+					
+					// If we are empty
+					if (el.empty())
+					{
+						bool state_changed = false;
+						// Define a direction first 
+						int inc = el.goingUp() ? 1:-1;
+							
+						// Check if there's still a call
+						for (store_t s=(store+inc); s >= 0 && s <= Store::maxStore(); s+=inc)
+						{
+							// if store has passengers in same direction and we can serve at least one
+							if (el.serves(s) && getStore(s).hasPassengers(el))
+							{
+			                    el.setMostDistantCall(s);
+								el.keep(el.goingUp() ? moving_up : moving_down);
+								state_changed = true;
+								break;
+							}
+						}
+
+						if (state_changed)
+							break;
+						
+						//If we are here - there's no call in same direction, try opposite
+						for (store_t s=(store-inc); s >= 0 && s <= Store::maxStore(); s-=inc)
+						{
+							// if store has passengers up and we can serve at least one
+							if (el.serves(s) && getStore(s).hasPassengers(el))
+							{
+			                    el.setMostDistantCall(s);
+								el.start(el.goingUp() ? moving_down : moving_up);
+								state_changed = true;
+								break;
+							}
+						}
+
+						// Double breaking out of for loop
+						if (state_changed)
+							break;
+						
+						// Ok, there's no calls, go resting
+						if (el.restingStore() == store)
+						{
+							el.start(resting);
+							break;
+						}
+						
+						if (el.restingStore() < store)
+						{
+		                    el.setMostDistantCall(el.restingStore());
+							if (el.goingUp())
+							{
+								el.start(moving_down);
+							}
+							else
+							{
+								el.keep(moving_down);
+							}
+							break;
+						}
+
+						if (el.restingStore() > store)
+						{
+		                    el.setMostDistantCall(el.restingStore());
+							if (el.goingUp())
+							{
+								el.keep(moving_up);
+							}
+							else
+							{
+								el.start(moving_up);
+							}
+							break;
+						}
+					}
+					// We do not serve this store
+					// We have no room
+					// We have no passengers to here
+					// We aren't there yet
+					// There's no passengers we can serve here
+					// We are not yet at resting store
+					el.keep(el.goingUp() ? moving_up : moving_down);
+					break;
                 case boarding_up:
                 case boarding_down:
                     // unboard
@@ -302,7 +317,7 @@ ElevatorController::run()
 
                     if (el.boardingEnds())
                     {
-                        // if there's no further calls and no passengers - schedule for ground floor resting
+                        // if there's no further calls and no passengers - schedule for resting
                         if (store == el.getMostDistantCall()
                             && el.empty())
                         {
@@ -310,6 +325,7 @@ ElevatorController::run()
 							{
 		                        el.setMostDistantCall(el.restingStore ());
 			                    el.start((store > el.restingStore ()) ? moving_down : moving_up);
+								break;
 							}
 							else 
 							{
@@ -329,29 +345,73 @@ ElevatorController::run()
 
                     break;
                 case resting:
-                    // start boarding if call from ground floor
-                    if(getStore(el.getCurrentStore()).hasPassengersUp(el))
+                    // start boarding if call from current floor
+                    if(getStore(store).hasPassengersUp(el))
                     {
                         el.start(boarding_up);
-                    }
-                    else if(getStore(el.getCurrentStore()).hasPassengersDown(el))
-                    {
-                        el.start(boarding_down);
-                    }
-                    // Check for calls on served stores
-                    else if (el.getMostDistantCall() != el.restingStore ())
-                    {
-                        el.start((el.getMostDistantCall() < el.restingStore ()) ? moving_down : moving_up);
-                    }
-                    // keep resting if none
-                    else
-                    {
-                        el.keep(resting);
+						break;
                     }
 
+					if(getStore(store).hasPassengersDown(el))
+                    {
+                        el.start(boarding_down);
+						break;
+                    }
+
+					// Check for calls on served stores
+					// Define a direction first 
+					int inc = (store > Store::maxStore()/2) ? 1:-1;
+						
+					// Check if there's still a call
+					for (store_t s=store; s >= 0 && s <= Store::maxStore(); s+=inc)
+					{
+						// if store has passengers in same direction and we can serve at least one
+						if (s == store)
+						{
+							if (getStore(s).hasPassengersUp(el))
+							{
+								el.start(boarding_up);
+								break;
+							}
+
+							if (getStore(s).hasPassengersDown(el))
+							{
+								el.start(boarding_down);
+								break;
+							}
+						}
+						else
+						{
+							if (el.serves(s) && getStore(s).hasPassengers(el))
+							{
+				                el.setMostDistantCall(s);
+								el.start((s > store) ? moving_up : moving_down);
+								break;
+							}
+						}
+					}
+
+					//If we are here - there's no call in same direction, try opposite
+					for (store_t s = (store-inc); s >= 0 && s <= Store::maxStore(); s-=inc)
+					{
+						// if store has passengers up and we can serve at least one
+						if (el.serves(s) && getStore(s).hasPassengers(el))
+						{
+		                    el.setMostDistantCall(s);
+							el.start((s < store) ? moving_down : moving_up);
+							break;
+						}
+					}
+					
+                    // keep resting if none
+					if (el.getCurrentState() == resting)
+					{
+                		el.keep(resting);
+					}
                     break;
             }
         }
+
 		if(printElevator())
 		{
 			cout << endl;

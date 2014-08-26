@@ -36,6 +36,7 @@ class ElevatorController
         static boost::mutex _mtx;
 
 		static vector<Elevator> & getElevators(){return _controller._elevators;}
+		static vector<Store>    & getStores(){return _controller._stores;}
 		static Store & getStore(store_t store){return _controller._stores[store];}
 		static void addStore(Store const &st){_controller._stores.push_back(st);}
 		static counter_t emulationStartTime()

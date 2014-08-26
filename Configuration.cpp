@@ -41,8 +41,8 @@ Configuration::load(string const &filename)
 
 	if (!configfile.good())
     {
-        cerr << "Unable to open file '" << filename << "'" << endl;
-        cerr << "Loading defaults" << endl;
+        cout << "Unable to open file '" << filename << "'" << endl;
+        cout << "Loading defaults" << endl;
     }
 
     while (configfile.good())

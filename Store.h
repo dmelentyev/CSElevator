@@ -44,10 +44,26 @@ class Store
 	    return ( _queue_up.empty() && _queue_down.empty() );
     }
 
-    inline bool hasPassengers(Elevator const& el) const 
+    inline bool hasPassengers() const 
+	{
+		return (hasPassengersUp() || hasPassengersDown());
+	}
+		
+    inline bool hasPassengersUp() const 
+	{
+		return (!_queue_up.empty());
+	}
+		
+    inline bool hasPassengersDown() const 
+	{
+		return (!_queue_down.empty());
+	}
+
+	inline bool hasPassengers(Elevator const& el) const 
 	{
 		return (hasPassengersUp(el) || hasPassengersDown(el));
 	}
+		
     inline bool hasPassengersUp(Elevator const& el) const 
 	{
 		if (!_queue_up.empty())

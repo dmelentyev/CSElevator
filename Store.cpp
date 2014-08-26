@@ -2,12 +2,12 @@
 /*
  * Store.cpp
  * Copyright (C) 2014 Dennis Melentyev <dennis.melentyev@gmail.com>
- *
+	 *
  * CreditSwissElevator is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+	 * 
  * CreditSwissElevator is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -25,11 +25,11 @@ store_t Store::_max_stores_cache=0;
 
 Store::Store(store_t store)
 {
-    _store = store;
+	_store = store;
 	_max_time = _min_time = _tot_time = 0L;
 	_min_time = ~_min_time;
 	_min_time = ((unsigned long)_min_time) >> 1;
-    _tot_people = 0;
+	_tot_people = 0;
 }
 
 Store::~Store()
@@ -40,9 +40,9 @@ people_t
 Store::putPeopleInto(Elevator &elevator)
 {
 	//Make sure elevator is at same store!
-    assert (elevator.getCurrentStore() == storeNumber());
+	assert (elevator.getCurrentStore() == storeNumber());
 
-    people_t picked = 0;
+	people_t picked = 0;
 
 	PeopleQueue tmpQueue;
 	PeopleQueue *workingQueue = NULL;
@@ -72,7 +72,7 @@ Store::putPeopleInto(Elevator &elevator)
 			}
 			workingQueue->pop_front();
 		}
-		
+
 		while (!tmpQueue.empty())
 		{
 			Person &p = tmpQueue.front();
@@ -80,7 +80,7 @@ Store::putPeopleInto(Elevator &elevator)
 			tmpQueue.pop_front();
 		}
 	}
-	
+
 	return picked;
 }
 
@@ -95,28 +95,28 @@ Store::getPeopleFrom(Elevator &elevator, counter_t iteration)
 		updateStats(iteration - p.elevatorTimer());
 		enqueuePassenger(p, iteration);
 	}
-    return picked;
+	return picked;
 }
 
 std::ostream& operator<<(std::ostream& os, const Store& obj)
 {
 	double hours, minutes, seconds;
-    os  << "s" << setw(2) << setfill('0') << (int) obj.storeNumber() << " | ";
+	os  << "s" << setw(2) << setfill('0') << (int) obj.storeNumber() << " | ";
 	counter2time (&hours, &minutes, &seconds, obj.minTime());
 	os << setw(2) << setfill('0') << int(hours) << ":"
-	   << setw(2) << setfill('0') << int(minutes) << ":"
-	   << setw(2) << setfill('0') << int(seconds) << " ";
-	
+		<< setw(2) << setfill('0') << int(minutes) << ":"
+		<< setw(2) << setfill('0') << int(seconds) << " ";
+
 	counter2time (&hours, &minutes, &seconds, obj.maxTime());
 	os << setw(2) << setfill('0') << int(hours) << ":"
-	   << setw(2) << setfill('0') << int(minutes) << ":"
-	   << setw(2) << setfill('0') << int(seconds) << " ";
-	
+		<< setw(2) << setfill('0') << int(minutes) << ":"
+		<< setw(2) << setfill('0') << int(seconds) << " ";
+
 	counter2time (&hours, &minutes, &seconds, obj.avgTime());
 	os << setw(2) << setfill('0') << int(hours) << ":"
-	   << setw(2) << setfill('0') << int(minutes) << ":"
-	   << setw(2) << setfill('0') << int(seconds) << " ";
-	
+		<< setw(2) << setfill('0') << int(minutes) << ":"
+		<< setw(2) << setfill('0') << int(seconds) << " ";
+
 	os << " |";
 	return os;
 }

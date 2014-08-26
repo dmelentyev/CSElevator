@@ -2,12 +2,12 @@
 /*
  * Person.h
  * Copyright (C) 2014 Dennis Melentyev <dennis.melentyev@gmail.com>
- *
+	 *
  * CreditSwissElevator is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+	 * 
  * CreditSwissElevator is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -24,35 +24,35 @@
 
 class Person
 {
-public:
-	Person()
+	public:
+		Person()
 	{
 		resetElevatorTimer(0);
 		setDestination(0);
 	}
-	Person(Person const& other)
+		Person(Person const& other)
 	{
 		resetElevatorTimer(other.elevatorTimer());
 		setDestination(other.destination());
 	}
-	virtual ~Person()
+		virtual ~Person()
 	{
 	}
-	inline store_t destination() const {return _destination;}
-	inline counter_t enqueued() const {return _time_in_elevator;}
-	inline void setDestination(store_t dest)
+		inline store_t destination() const {return _destination;}
+		inline counter_t enqueued() const {return _time_in_elevator;}
+		inline void setDestination(store_t dest)
 	{
 		_destination = dest;
 	}
-	inline void resetElevatorTimer(counter_t iteration) {_time_in_elevator = iteration;}
-	inline void incElevatorTimer() {_time_in_elevator++;}
-	inline counter_t elevatorTimer() const {return _time_in_elevator;}
+		inline void resetElevatorTimer(counter_t iteration) {_time_in_elevator = iteration;}
+		inline void incElevatorTimer() {_time_in_elevator++;}
+		inline counter_t elevatorTimer() const {return _time_in_elevator;}
 
-protected:
+	protected:
 
-private:
-	store_t    _destination;
-	counter_t _time_in_elevator;
+	private:
+		store_t    _destination;
+		counter_t _time_in_elevator;
 };
 
 typedef deque<Person> PeopleQueue;
